@@ -20,15 +20,10 @@ enum RequestStatus {
   CLOSED
 }
 
-enum Status {
-  ACTIVE
-  INACTIVE
-}
-
 model User {
   id                Int           @id @default(autoincrement())
   username          String        @unique @map("username") @db.VarChar(50)
-  password          String        @db.VarChar(50)
+  password          String        @db.VarChar(250)
   email             String?       @db.VarChar(250)
   name              String?       @db.VarChar(250)
   address           String?       @db.VarChar(250)
@@ -55,7 +50,7 @@ model CodeRequest {
   menteeId         Int                @map("mentee_id")
   mentor           User               @relation("to", fields: [mentorId], references: [id])
   mentorId         Int                @map("mentor_id")
-  status           RequestStatus
+  status           RequestStatus      @default(OPEN)
   CodeRequestSkill CodeRequestSkill[]
 
   @@map("code_request")
@@ -210,7 +205,7 @@ model Image {
 model Skill {
   id               Int                @id @default(autoincrement())
   name             String             @unique @db.VarChar(250)
-  status           Status
+  active           Boolean            @default(true)
   CodeRequestSkill CodeRequestSkill[]
   MentorSkill      MentorSkill[]
 
