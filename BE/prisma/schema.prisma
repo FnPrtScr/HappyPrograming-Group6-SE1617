@@ -7,183 +7,222 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model account {
-  id          Int     @id @default(autoincrement())
-  accountname String  @db.VarChar(50)
-  password    String  @db.VarChar(50)
-  roleid      Int?
-  email       String? @db.VarChar(250)
-
-  @@index([roleid], map: "roleid")
+enum Role {
+  ADMIN
+  MENTEE
+  MENTOR
 }
 
-model answer {
-  id                  Int     @id @default(autoincrement())
-  mentorcoderequestid Int?
-  content             String? @db.VarChar(250)
-
-  @@index([mentorcoderequestid], map: "mentorcoderequestid")
+enum RequestStatus {
+  OPEN
+  PROCESSING
+  CANCEL
+  CLOSED
 }
 
-model coderequest {
-  id       Int       @id @default(autoincrement())
-  title    String?   @db.VarChar(250)
-  content  String?   @db.VarChar(250)
-  deadline DateTime? @db.Date
-  menteeID Int?
-
-  @@index([menteeID], map: "menteeID")
+enum Status {
+  ACTIVE
+  INACTIVE
 }
 
-model coderequestskill {
-  id            Int  @id @default(autoincrement())
-  coderequestid Int?
-  skillid       Int?
+model User {
+  id                Int           @id @default(autoincrement())
+  username          String        @unique @map("username") @db.VarChar(50)
+  password          String        @db.VarChar(50)
+  email             String?       @db.VarChar(250)
+  name              String?       @db.VarChar(250)
+  address           String?       @db.VarChar(250)
+  phone             String?       @db.VarChar(250)
+  birthday          DateTime?     @db.Date
+  sex               String?       @db.VarChar(250)
+  introduce         String?       @db.VarChar(250)
+  avatar            String?       @db.VarChar(250)
+  role              Role
+  Image             Image[]
+  MentorSkill       MentorSkill[]
+  MenteeCodeRequest CodeRequest[] @relation("from")
+  MentorCodeRequest CodeRequest[] @relation("to")
 
-  @@index([coderequestid], map: "coderequestid")
-  @@index([skillid], map: "skillid")
+  @@map("user")
 }
 
-model feedback {
-  id       Int     @id @default(autoincrement())
-  menteeid Int?
-  star     Int?
-  comment  String? @db.VarChar(250)
+model CodeRequest {
+  id               Int                @id @default(autoincrement())
+  title            String?            @db.VarChar(250)
+  content          String?            @db.VarChar(250)
+  deadline         DateTime?          @db.Date
+  mentee           User               @relation("from", fields: [menteeId], references: [id])
+  menteeId         Int                @map("mentee_id")
+  mentor           User               @relation("to", fields: [mentorId], references: [id])
+  mentorId         Int                @map("mentor_id")
+  status           RequestStatus
+  CodeRequestSkill CodeRequestSkill[]
 
-  @@index([menteeid], map: "menteeid")
+  @@map("code_request")
 }
 
-model feedbackanswer {
-  id         Int  @id @default(autoincrement())
-  feedbackid Int?
-  answerid   Int?
+model CodeRequestSkill {
+  codeRequest   CodeRequest @relation(fields: [codeRequestId], references: [id])
+  codeRequestId Int         @map("code_request_id")
+  skill         Skill       @relation(fields: [skillId], references: [id])
+  skillId       Int         @map("skill_id")
 
-  @@index([answerid], map: "answerid")
-  @@index([feedbackid], map: "feedbackid")
+  @@id([codeRequestId, skillId])
+  @@map("code_request_skill")
 }
 
-model hirerelatitonship {
-  id       Int  @id @default(autoincrement())
-  menteeid Int?
-  mentorid Int?
+// model Answer {
+//   id                  Int     @id @default(autoincrement())
+//   mentorCodeRequestId Int     @map("mentor_code_request_id")
+//   content             String? @db.VarChar(250)
 
-  @@index([menteeid], map: "menteeid")
-  @@index([mentorid], map: "mentorid")
-}
+//   @@map("answer")
+// }
 
-model hirerequest {
-  id       Int     @id @default(autoincrement())
-  menteeid Int?
-  mentorid Int?
-  title    String? @db.VarChar(250)
-  content  String? @db.VarChar(250)
-  statusid Int?
+// model Feedback {
+//   id       Int     @id @default(autoincrement())
+//   mentee   User    @relation(fields: [menteeId], references: [id])
+//   menteeId Int     @map("mentee_id")
+//   star     Int?
+//   comment  String? @db.VarChar(250)
 
-  @@index([menteeid], map: "menteeid")
-  @@index([mentorid], map: "mentorid")
-  @@index([statusid], map: "statusid")
-}
+//   @@map("feedback")
+// }
 
-model historyhirerelationship {
-  id        Int       @id @default(autoincrement())
-  menteeid  Int?
-  mentorid  Int?
-  closedate DateTime? @db.Date
+// model FeedbackAnswer {
+//   id         Int @id @default(autoincrement())
+//   feedbackId Int @map("feedback_id")
+//   answerId   Int @map("answer_id")
 
-  @@index([menteeid], map: "menteeid")
-  @@index([mentorid], map: "mentorid")
-}
+//   @@map("feedback_answer")
+// }
 
-model image {
-  id        Int     @id @default(autoincrement())
-  accountid Int?
-  image     String? @db.VarChar(250)
+// model HireRelatitonship {
+//   mentee   Mentee @relation(fields: [menteeId], references: [id])
+//   menteeId Int    @map("mentee_id")
+//   mentor   Mentor @relation(fields: [mentorId], references: [id])
+//   mentorId Int    @map("mentor_id")
 
-  @@index([accountid], map: "accountid")
-}
+//   @@id([menteeId, mentorId])
+//   @@map("hire_relationship")
+// }
 
-model job {
-  id      Int     @id @default(autoincrement())
-  jobname String? @db.VarChar(250)
-}
+// model HireRequest {
+//   mentee   Mentee        @relation(fields: [menteeId], references: [id])
+//   menteeId Int           @map("mentee_id")
+//   mentor   Mentor        @relation(fields: [mentorId], references: [id])
+//   mentorId Int           @map("mentor_id")
+//   title    String?       @db.VarChar(250)
+//   content  String?       @db.VarChar(250)
+//   status   RequestStatus
 
-model mentee {
-  id        Int       @id @default(autoincrement())
-  accountid Int?
-  name      String    @db.VarChar(250)
-  address   String?   @db.VarChar(250)
-  phone     String?   @db.VarChar(250)
-  birthday  DateTime? @db.Date
-  sex       String?   @db.VarChar(250)
-  avatar    String?   @db.VarChar(250)
-  introduce String?   @db.VarChar(250)
+//   @@id([menteeId, mentorId])
+//   @@map("hire_request")
+// }
 
-  @@index([accountid], map: "accountid")
-}
+// model HistoryHireRelationship {
+//   mentee    Mentee    @relation(fields: [menteeId], references: [id])
+//   menteeId  Int       @map("mentee_id")
+//   mentor    Mentor    @relation(fields: [mentorId], references: [id])
+//   mentorId  Int       @map("mentor_id")
+//   closedate DateTime? @db.Date
 
-model mentor {
-  id          Int       @id @default(autoincrement())
-  accountid   Int?
-  name        String?   @db.VarChar(250)
-  address     String?   @db.VarChar(250)
-  phone       String?   @db.VarChar(250)
-  birthday    DateTime? @db.Date
-  sex         String?   @db.VarChar(250)
-  introduce   String?   @db.VarChar(250)
-  achievement String?   @db.VarChar(250)
-  avatar      String?   @db.VarChar(250)
-  costHire    Float     @db.Float
+//   @@id([menteeId, mentorId])
+//   @@map("history_hire_relationship")
+// }
 
-  @@index([accountid], map: "accountid")
-}
-
-model mentorcoderequest {
-  id            Int  @id @default(autoincrement())
-  coderequestid Int?
-  mentorid      Int?
-
-  @@index([coderequestid], map: "coderequestid")
-  @@index([mentorid], map: "mentorid")
-}
-
-model mentorcoderequeststatus {
-  id                  Int  @id @default(autoincrement())
-  mentorcoderequestid Int?
-  statusid            Int?
-
-  @@index([mentorcoderequestid], map: "mentorcoderequestid")
-  @@index([statusid], map: "statusid")
-}
-
-model mentorjob {
-  id       Int  @id @default(autoincrement())
-  mentorid Int?
-  jobid    Int?
-
-  @@index([jobid], map: "jobid")
-  @@index([mentorid], map: "mentorid")
-}
-
-model mentorskill {
-  id       Int  @id @default(autoincrement())
-  mentorid Int?
-  skillid  Int?
-
-  @@index([mentorid], map: "mentorid")
-  @@index([skillid], map: "skillid")
-}
-
-model roles {
-  id   Int     @id @default(autoincrement())
-  name String? @db.VarChar(50)
-}
-
-model skill {
-  id   Int     @id @default(autoincrement())
-  name String? @db.VarChar(250)
-}
-
-model status {
+model Image {
   id     Int     @id @default(autoincrement())
-  Status String? @db.VarChar(50)
+  user   User    @relation(fields: [userId], references: [id])
+  userId Int     @map("user_id")
+  image  String? @db.VarChar(250)
+
+  @@map("image")
+}
+
+// model Mentee {
+//   id     Int  @id @default(autoincrement())
+//   user   User @relation(fields: [userId], references: [id])
+//   userId Int  @unique @map("user_id")
+
+//   Feedback                Feedback[]
+//   HireRelatitonship       HireRelatitonship[]
+//   HireRequest             HireRequest[]
+//   HistoryHireRelationship HistoryHireRelationship[]
+//   CodeRequest             CodeRequest[]
+
+//   @@map("mentee")
+// }
+
+// model Mentor {
+//   id          Int     @id @default(autoincrement())
+//   user        User    @relation(fields: [userId], references: [id])
+//   userId      Int     @unique @map("user_id")
+//   achievement String? @db.VarChar(250)
+//   costHire    Float   @map("cost_hire") @db.Float
+
+//   HireRelatitonship       HireRelatitonship[]
+//   HireRequest             HireRequest[]
+//   HistoryHireRelationship HistoryHireRelationship[]
+//   MentorJob               MentorJob[]
+//   MentorSkill             MentorSkill[]
+//   CodeRequest             CodeRequest[]
+
+//   @@map("mentor")
+// }
+
+// model mentorCodeRequest {
+//   id            Int @id @default(autoincrement())
+//   coderequestid Int
+//   mentorid      Int
+
+//   @@index([coderequestid], map: "coderequestid")
+//   @@index([mentorid], map: "mentorid")
+// }
+
+// model mentorcoderequeststatus {
+//   id                  Int @id @default(autoincrement())
+//   mentorcoderequestid Int
+//   statusid            Int
+
+//   @@index([mentorcoderequestid], map: "mentorcoderequestid")
+//   @@index([statusid], map: "statusid")
+// }
+
+// model Job {
+//   id        Int         @id @default(autoincrement())
+//   jobName   String?     @map("job_name") @db.VarChar(250)
+//   MentorJob MentorJob[]
+
+//   @@map("job")
+// }
+
+// model MentorJob {
+//   id       Int    @id @default(autoincrement())
+//   mentor   Mentor @relation(fields: [mentorId], references: [id])
+//   mentorId Int    @map("mentor_id")
+//   job      Job    @relation(fields: [jobId], references: [id])
+//   jobId    Int    @map("job_id")
+
+//   @@map("mentor_job")
+// }
+
+model Skill {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique @db.VarChar(250)
+  status           Status
+  CodeRequestSkill CodeRequestSkill[]
+  MentorSkill      MentorSkill[]
+
+  @@map("skill")
+}
+
+model MentorSkill {
+  mentor   User  @relation(fields: [mentorId], references: [id])
+  mentorId Int   @map("mentor_id")
+  skill    Skill @relation(fields: [skillId], references: [id])
+  skillId  Int   @map("skill_id")
+
+  @@id([mentorId, skillId])
+  @@map("mentor_skill")
 }
