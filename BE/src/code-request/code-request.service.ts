@@ -1,45 +1,99 @@
 import { Injectable } from '@nestjs/common';
-import { CreateCodeRequestDto } from './dto/create-code-request.dto';
 import { UpdateCodeRequestDto } from './dto/update-code-request.dto';
 import { PrismaService } from 'src/prisma.service';
 import { Prisma, User } from '@prisma/client';
+import { JwtPayload } from 'src/auth/jwt-payload';
 
 @Injectable()
 export class CodeRequestService {
   constructor(private prisma: PrismaService) {}
 
   async create(mentee: User, createCodeRequestDto: any) {
+    const { mentorId, skills, ...payload } = createCodeRequestDto;
+
+    const skillIds = skills.map((skillId: number) => ({
+      Skill: {
+        connect: {
+          id: skillId,
+        },
+      },
+    }));
+
     const newCodeRequest = await this.prisma.codeRequest.create({
       data: {
-        ...createCodeRequestDto,
-        mentee: {
+        ...payload,
+        Mentee: {
           connect: {
-            id: mentee.id,
+            username: mentee.username,
           },
         },
-        mentor: {
+        Mentor: {
           connect: {
-            id: createCodeRequestDto.mentorId,
+            id: mentorId,
+          },
+        },
+        CodeRequestSkill: {
+          create: skillIds,
+        },
+      },
+    });
+    return newCodeRequest;
+  }
+
+  async findMyRequest(user: JwtPayload) {
+    const myRequests = this.prisma.codeRequest.findMany({
+      where: {
+        OR: [
+          {
+            menteeId: user.userId,
+          },
+          {
+            mentorId: user.userId,
+          },
+        ],
+      },
+      include: {
+        CodeRequestSkill: {
+          select: {
+            Skill: true,
           },
         },
       },
     });
-    return 'This action adds a new codeRequest';
+    return myRequests;
   }
 
-  findAll() {
-    return `This action returns all codeRequest`;
+  async findAll() {
+    const codeRequests = await this.prisma.codeRequest.findMany();
+    return codeRequests;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} codeRequest`;
+  async findOne(id: number) {
+    const codeRequest = await this.prisma.codeRequest.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        CodeRequestSkill: {
+          select: {
+            Skill: true,
+          },
+        },
+      },
+    });
+    return codeRequest;
   }
 
   update(id: number, updateCodeRequestDto: UpdateCodeRequestDto) {
     return `This action updates a #${id} codeRequest`;
   }
 
-  remove(id: number) {
+  async remove(id: number) {
+    const deletedCodeRequest = await this.prisma.codeRequest.delete({
+      where: {
+        id,
+      },
+    });
     return `This action removes a #${id} codeRequest`;
   }
 }

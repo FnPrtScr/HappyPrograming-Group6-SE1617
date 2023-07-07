@@ -12,10 +12,11 @@ import {
 import { CodeRequestService } from './code-request.service';
 import { CreateCodeRequestDto } from './dto/create-code-request.dto';
 import { UpdateCodeRequestDto } from './dto/update-code-request.dto';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
+import { JwtPayload } from 'src/auth/jwt-payload';
 
 @Controller('code-request')
 export class CodeRequestController {
@@ -28,9 +29,21 @@ export class CodeRequestController {
     @Request() req,
     @Body() createCodeRequestDto: Prisma.CodeRequestUncheckedCreateInput,
   ) {
-    return this.codeRequestService.create(req.user, createCodeRequestDto);
+    return this.codeRequestService.create(
+      req.user as User,
+      createCodeRequestDto,
+    );
   }
 
+  @Roles(Role.MENTEE, Role.MENTOR)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('me')
+  getMyRequest(@Request() req) {
+    return this.codeRequestService.findMyRequest(req.user as JwtPayload);
+  }
+
+  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
   findAll() {
     return this.codeRequestService.findAll();

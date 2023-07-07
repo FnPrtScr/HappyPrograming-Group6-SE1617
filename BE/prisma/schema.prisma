@@ -46,21 +46,21 @@ model CodeRequest {
   title            String?            @db.VarChar(250)
   content          String?            @db.VarChar(250)
   deadline         DateTime?          @db.Date
-  mentee           User               @relation("from", fields: [menteeId], references: [id])
   menteeId         Int                @map("mentee_id")
-  mentor           User               @relation("to", fields: [mentorId], references: [id])
   mentorId         Int                @map("mentor_id")
   status           RequestStatus      @default(OPEN)
+  Mentee           User               @relation("from", fields: [menteeId], references: [id])
+  Mentor           User               @relation("to", fields: [mentorId], references: [id])
   CodeRequestSkill CodeRequestSkill[]
 
   @@map("code_request")
 }
 
 model CodeRequestSkill {
-  codeRequest   CodeRequest @relation(fields: [codeRequestId], references: [id])
   codeRequestId Int         @map("code_request_id")
-  skill         Skill       @relation(fields: [skillId], references: [id])
   skillId       Int         @map("skill_id")
+  Skill         Skill       @relation(fields: [skillId], references: [id])
+  CodeRequest   CodeRequest @relation(fields: [codeRequestId], references: [id])
 
   @@id([codeRequestId, skillId])
   @@map("code_request_skill")
@@ -128,9 +128,9 @@ model CodeRequestSkill {
 
 model Image {
   id     Int     @id @default(autoincrement())
-  user   User    @relation(fields: [userId], references: [id])
   userId Int     @map("user_id")
   image  String? @db.VarChar(250)
+  User   User    @relation(fields: [userId], references: [id])
 
   @@map("image")
 }
@@ -213,10 +213,10 @@ model Skill {
 }
 
 model MentorSkill {
-  mentor   User  @relation(fields: [mentorId], references: [id])
   mentorId Int   @map("mentor_id")
-  skill    Skill @relation(fields: [skillId], references: [id])
   skillId  Int   @map("skill_id")
+  Mentor   User  @relation(fields: [mentorId], references: [id])
+  Skill    Skill @relation(fields: [skillId], references: [id])
 
   @@id([mentorId, skillId])
   @@map("mentor_skill")
