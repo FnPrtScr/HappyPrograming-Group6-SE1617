@@ -58,8 +58,8 @@ model CodeRequest {
 model CodeRequestSkill {
   codeRequestId Int         @map("code_request_id")
   skillId       Int         @map("skill_id")
-  Skill         Skill       @relation(fields: [skillId], references: [id])
-  CodeRequest   CodeRequest @relation(fields: [codeRequestId], references: [id])
+  Skill         Skill       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  CodeRequest   CodeRequest @relation(fields: [codeRequestId], references: [id], onDelete: Cascade)
 
   @@id([codeRequestId, skillId])
   @@map("code_request_skill")
@@ -98,7 +98,7 @@ model HireRequest {
   title         String?     @db.VarChar(250)
   content       String?     @db.VarChar(250)
   Mentor        Mentor      @relation(fields: [mentorId], references: [id])
-  CodeRequest   CodeRequest @relation(fields: [codeRequestId], references: [id])
+  CodeRequest   CodeRequest @relation(fields: [codeRequestId], references: [id], onDelete: Cascade)
 
   @@map("hire_request")
 }

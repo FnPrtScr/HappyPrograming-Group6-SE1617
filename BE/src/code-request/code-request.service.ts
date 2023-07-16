@@ -14,7 +14,7 @@ export class CodeRequestService {
     user: JwtPayloadDto,
     createCodeRequestDto: CreateCodeRequestDto,
   ) {
-    const { skills, ...payload } = createCodeRequestDto;
+    const { skills, deadline, ...payload } = createCodeRequestDto;
 
     let skillIds = [];
 
@@ -28,9 +28,12 @@ export class CodeRequestService {
       }));
     }
 
+    const deadlineDate = deadline ? new Date(deadline) : null;
+
     const newCodeRequest = await this.prisma.codeRequest.create({
       data: {
         ...payload,
+        deadline: deadlineDate,
         Mentee: {
           connect: {
             userId: user.userId,
